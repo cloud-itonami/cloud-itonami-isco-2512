@@ -45,6 +45,34 @@ Resolves via [`kotoba-lang/occupation`](https://github.com/kotoba-lang/occupatio
 See [`docs/business-model.md`](docs/business-model.md) and
 [`docs/operator-guide.md`](docs/operator-guide.md).
 
+## Reference implementation
+
+`src/dev_studio/{store,governor}.cljc` is a minimal but real
+implementation of the Core Contract above (pure cljc, no external deps):
+
+- `dev-studio.store` — `Store` protocol + `MemStore`: projects, builds,
+  deploys, credential-rotation events. A build/deploy/credential-rotation
+  can only be recorded against a registered project (project provenance).
+- `dev-studio.governor` — `DevStudioGovernor`: `assess` gates a proposal
+  against the project env. Hard invariants force `:hold` (no project,
+  direct-write instead of `:propose`, or a production deploy below
+  `:high` safety-class); production deploys always require `:high`+
+  safety-class and thus `:human-approval`; credential-rotation proposals
+  **always** escalate to `:human-approval` regardless of safety-class or
+  confidence (no autonomous credential rotation); low-confidence
+  proposals also escalate.
+
+```bash
+clojure -M:test   # 9 tests, 15 assertions, green
+```
+
+This is what backs this repo's `:maturity :implemented` entry in
+[`kotoba-lang/occupation`](https://github.com/kotoba-lang/occupation) —
+the 15th `cloud-itonami-isco-*` occupation to reach that tier, after
+`cloud-itonami-isco-6112`, `-2221`, `-7126`, `-4321`, `-9312`, `-5322`,
+`-8332`, `-1321`, `-3253`, `-6210`, `-5223`, `-7231`, `-8121` and `-9111`
+(ADR-2607012000).
+
 ## License
 
 AGPL-3.0-or-later.
