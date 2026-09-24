@@ -1,0 +1,44 @@
+;; What this vertical's robot physically does, declared for
+;; kotoba.robotics.process (kotoba-lang/robotics). `kbb -M:physics` runs it.
+;;
+;; README "Robotics premise": a physical-office robot performs equipment
+;; setup, hardware testing rig assist and workspace checks (ISCO 2512,
+;; software developers; the software work itself stays human/LLM-assisted).
+;; Its physical work: mounting a monitor onto a desk arm, carrying test
+;; hardware to the rig, and the device-under-test enclosure inside the
+;; rig's thermal soak chamber.
+;;
+;; Every number without a cited source is marked `estimate` in its :basis.
+;; Replacing an estimate with a sourced value is this bot's growth work.
+{:physics/schema "itonami.physical-ai.spec.v1"
+ :repo "cloud-itonami/cloud-itonami-isco-2512"
+ :cases
+ [{:id :monitor-onto-desk-arm
+   :kind :manipulator
+   :procedure "arm lifts a developer monitor from its box on the floor cart onto the desk-mounted monitor arm"
+   :params {:l1-m 0.45 :l2-m 0.40 :m1-kg 3.5 :m2-kg 2.5
+            :from [0.55 -0.35] :to [0.35 0.45] :duration-s 2.5 :steps 500}
+   :sweep {:param :payload-kg :values [3.0 4.5 6.0 8.0 10.0]}
+   :quantity :peak-tau1-nm
+   :limit {:max 60.0 :basis "estimate: continuous shoulder torque of a light collaborative arm (~5 kg class)"}
+   :boundary {:lo 0.5 :hi 30.0}}
+  {:id :test-hardware-to-rig
+   :kind :transport
+   :procedure "AMR carries a crate of devices-under-test and test fixtures from the storeroom to the hardware test rig"
+   :params {:mass-kg 35.0 :payload-kg 25.0 :v-max-mps 1.0 :a-max-mps2 0.5
+            :brake-decel-mps2 0.7 :drive-force-n 70.0 :crr 0.02
+            :cog-height-m 0.55 :support-half-length-m 0.25}
+   :sweep {:param :distance-m :values [10.0 25.0 40.0 60.0 80.0]}
+   :quantity :cycle-time-s
+   :limit {:max 45.0 :basis "estimate: fixtures should reach the rig within 45 s so a test-rig slot is not lost to fetching"}
+   :boundary {:lo 2.0 :hi 200.0}}
+  {:id :dut-enclosure-heat-soak
+   :kind :thermal
+   :procedure "plastic device-under-test enclosure wall during a 30-minute 70 C heat-soak in the rig's thermal chamber"
+   :params {:thickness-m 0.003 :conductivity-w-mk 0.20 :density-kg-m3 1050.0 :specific-heat-j-kgk 1400.0
+            :t0-c 23.0 :t-hot-c 70.0 :h-front-w-m2k 15.0 :t-back-ambient-c 23.0 :h-back-w-m2k 5.0
+            :threshold-c 60.0 :duration-s 1800.0 :nodes 11}
+   :sweep {:param :h-back-w-m2k :values [2.0 5.0 10.0 20.0 40.0]}
+   :quantity :final-back-c
+   :limit {:max 60.0 :basis "estimate: keep the enclosure inner face (where the battery sits) below 60 C, the common upper charge/discharge temperature on Li-ion cell datasheets"}
+   :boundary {:lo 1.0 :hi 100.0}}]}
